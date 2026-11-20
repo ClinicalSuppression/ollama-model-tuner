@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local overrides and scratch files
+*.local.*
+*.bak
+*.log
+scratch/

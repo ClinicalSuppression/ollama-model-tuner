@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- `scripts/local-preset.mjs` resolves the `local` preset for the current moment
+  without writing anything.
+- `scripts/local-preset-watch.mjs` keeps `presets.local` synced with the model
+  loaded in Ollama, rewriting only that block and validating before an atomic
+  write.
+- `scripts/start-local-preset-watch.ps1` starts the watcher detached and
+  idempotently, with `-Stop` for shutdown.
+- README section documenting the oh-my-opencode-slim presets and the automatic
+  `local` tracking.
+
+### Fixed
+
+- Derived preset models are fully qualified as `provider/model`.
+- Indentation and trailing-comma handling preserve the rest of the config
+  byte-identically across rewrites.
+
 ## 1.0.0
 
 First stable release.

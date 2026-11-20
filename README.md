@@ -111,89 +111,6 @@ Deterministic fuzzy matcher. Prints JSON and exits `0` on an exact match, `1` wh
 candidates exist but none is exact, and `2` when nothing is plausible. It never
 picks a model.
 
-### `scripts/local-preset.mjs`
-
-Prints the `local` preset resolved for the current moment, without writing
-anything.
-
-```powershell
-node scripts\local-preset.mjs            # resolved preset as JSON
-node scripts\local-preset.mjs --check    # exit 0 if a model resolves
-node scripts\local-preset.mjs --dry-run  # explain the decision on stderr
-```
-
-It uses whatever model is resident in Ollama, choosing the most recently used
-when several are loaded, and falls back to
-`192k-TPK-tuned-Qwen3.8-9B-Dist-iQ4_K_M:latest` when nothing is loaded.
-
-### `scripts/local-preset-watch.mjs` and `start-local-preset-watch.ps1`
-
-Keeps the `local` preset in `oh-my-opencode-slim.json` in sync with Ollama
-automatically. oh-my-opencode-slim exposes no command substitution inside preset
-entries, so this watcher supplies the dynamic part: it polls Ollama and rewrites
-only the `presets.local` block when the loaded model changes. With
-`liveConfigRefresh` enabled (the default), the slim plugin then reloads the
-config on its own.
-
-```powershell
-node scripts\local-preset-watch.mjs --once     # sync once and exit
-node scripts\local-preset-watch.mjs            # sync, then poll every 15s
-node scripts\local-preset-watch.mjs --dry-run  # report the decision only
-```
-
-Start it detached and idempotently with the launcher:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\start-local-preset-watch.ps1
-powershell -ExecutionPolicy Bypass -File scripts\start-local-preset-watch.ps1 -Stop
-```
-
-Guarantees: only `presets.local` is touched, the rest of the file stays
-byte-identical, the rewrite is validated with `JSON.parse` before an atomic
-write, and an unchanged model produces no write at all.
-
-| Variable | Meaning |
-|---|---|
-| `OLLAMA_HOST` | Ollama endpoint (default `127.0.0.1:11434`; a missing scheme is added) |
-| `LOCAL_PRESET_CONFIG` | Config path override |
-| `LOCAL_PRESET_INTERVAL` | Poll interval in ms (default 15000) |
-
-## oh-my-opencode-slim presets
-
-`oh-my-opencode-slim.json` holds one preset per active provider. Every provider
-preset uses only models from that provider, with role-appropriate picks.
-
-| Preset | Provider | Roles |
-|---|---|---|
-| `openai` | `openai` | `gpt-6-astra` orchestrates and reviews, `gpt-6-luna` explores, `gpt-6-sol` designs and fixes |
-| `vertex` | `google-vertex` | `gemini-4-hydrogen` orchestrates, reviews, and designs; `gemini-3.5-flash-lite` explores; `gemini-3.5-flash` fixes |
-| `nararouter` | `nararouter` | Claude Opus 5.5 orchestrates and reviews, DeepSeek V4.1 Flash explores, Claude Sonnet 5.5 designs, Kimi K2.7 Code fixes |
-| `ollama` | `ollama` | 192k Defiant Fable `iQ6_K` for every role |
-| `xollama` | `xollama` | Ternary Bonsai 2 27B for every role |
-| `strata` | `strata` | `swift-iq2_xs` for every role |
-| `local` | runtime | Tracks the model loaded in Ollama; falls back to the 192k Qwen3.8 Distill |
-
-Model strings are fully qualified as `provider/model`. Switch presets with
-`/preset <name>`.
-
-### The `local` preset
-
-`local` follows whatever Ollama has loaded. Because the slim schema has no
-command substitution inside preset entries, the watcher in
-`scripts/local-preset-watch.mjs` provides that behaviour: it rewrites only the
-`presets.local` block when the loaded model changes, and `liveConfigRefresh`
-picks the change up without a restart.
-
-Start it once per session:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\start-local-preset-watch.ps1
-```
-
-Without the watcher, `local` stays on whatever model was last written to the
-file, so run `node scripts\local-preset-watch.mjs --once` after changing the
-loaded model.
-
 ## Naming rules
 
 Derived tags follow:
@@ -234,8 +151,6 @@ Abbreviations save at least three characters: `unquantized` to `unq`,
 
 - Ollama only. LM Studio, vLLM, llama.cpp, KoboldCpp, and other stacks are out of
   scope.
-- The `local` preset follows the loaded model only while the watcher is running;
-  start it with `scripts\start-local-preset-watch.ps1`.
 - Context-length and VRAM figures are estimates from model geometry and measured
   loads, not live measurements per tag.
 - Non-thinking mode cannot be forced from a Modelfile; that requires the API's
